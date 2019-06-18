@@ -1,7 +1,7 @@
 package com.ing.wbaa.rokku.proxy.metrics
 
 import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.jmx.JmxReporter
+//import com.codahale.metrics.jmx.JmxReporter
 
 object MetricsFactory {
 
@@ -18,7 +18,7 @@ object MetricsFactory {
 
   private[this] val metrics = new MetricRegistry()
 
-  JmxReporter.forRegistry(metrics).inDomain("rokku").build.start()
+  //  JmxReporter.forRegistry(metrics).inDomain("rokku").build.start()
 
   def registryMetrics(): MetricRegistry = metrics
 

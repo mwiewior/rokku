@@ -15,6 +15,7 @@ import scala.concurrent.Future
 trait LineageProviderAtlas extends LineageHelpers {
 
   protected[this] implicit def system: ActorSystem
+  val lineageRecorderRef = system.actorSelection("/user/lineage-rec-id-1")
 
   def createLineageFromRequest(httpRequest: HttpRequest, userSTS: User, clientIPAddress: RemoteAddress)(implicit id: RequestId): Future[Done] = {
     val lineageHeaders = getLineageHeaders(httpRequest)
@@ -37,12 +38,12 @@ trait LineageProviderAtlas extends LineageHelpers {
         // get object
         case HttpMethods.GET if lineageHeaders.queryParams.isEmpty || lineageHeaders.queryParams.contains("encoding-type") && !bucketObject.isEmpty =>
           val externalObject = s"$EXTERNAL_OBJECT_OUT/${bucketObject.split("/").takeRight(1).mkString}"
-          readOrWriteLineage(lineageHeaders, userSTS, Read(), clientIPAddress, Some(externalObject))
+          readOrWriteLineage(lineageHeaders, userSTS, Read(), clientIPAddress, Some(externalObject), lineageRecorderRef)
 
         // put object from outside of ceph
         case HttpMethods.PUT if lineageHeaders.queryParams.isEmpty && lineageHeaders.copySource.isEmpty && !bucketObject.isEmpty =>
           val externalObject = s"$EXTERNAL_OBJECT_IN/${bucketObject.split("/").takeRight(1).mkString}"
-          readOrWriteLineage(lineageHeaders, userSTS, Write(), clientIPAddress, Some(externalObject))
+          readOrWriteLineage(lineageHeaders, userSTS, Write(), clientIPAddress, Some(externalObject), lineageRecorderRef)
 
         // put object - copy
         // if contains header x-amz-copy-source
@@ -60,7 +61,7 @@ trait LineageProviderAtlas extends LineageHelpers {
         // aws request eg. POST /ObjectName?uploadId=UploadId and content-type application/xml
         case HttpMethods.POST if lineageHeaders.queryParams.getOrElse("").contains("uploadId") && !bucketObject.isEmpty =>
           val externalObject = s"$EXTERNAL_OBJECT_IN/${bucketObject.split("/").takeRight(1).mkString}"
-          readOrWriteLineage(lineageHeaders, userSTS, Write(), clientIPAddress, Some(externalObject))
+          readOrWriteLineage(lineageHeaders, userSTS, Write(), clientIPAddress, Some(externalObject), lineageRecorderRef)
 
         // delete object
         case HttpMethods.DELETE if lineageHeaders.queryParams.isEmpty && !bucketObject.isEmpty =>
