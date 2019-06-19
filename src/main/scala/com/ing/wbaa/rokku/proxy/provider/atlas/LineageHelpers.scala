@@ -8,7 +8,7 @@ import com.ing.wbaa.rokku.proxy.data.{ AccessType, LineageHeaders, LineageObject
 import com.ing.wbaa.rokku.proxy.data.LineageLiterals._
 import com.ing.wbaa.rokku.proxy.provider.atlas.ModelKafka._
 import com.ing.wbaa.rokku.proxy.handler.LoggerHandlerWithId
-import com.ing.wbaa.rokku.proxy.persistence.LineageRecorder.ReadOrWriteLineageEvt
+import com.ing.wbaa.rokku.proxy.persistence.LineageRecorder.{ CustomLineageHeaders, ReadOrWriteLineageEvt }
 import com.ing.wbaa.rokku.proxy.provider.kafka.EventProducer
 
 import scala.concurrent.Future
@@ -91,7 +91,9 @@ trait LineageHelpers extends EventProducer {
     val s3ObjectEntityJs = s3ObjectEntity(bucketObject, pseudoDir, guids.pseudoDir, userName, lh.contentType.toString(), guids.objectGuid)
     val externalPathEntityJs = fsPathEntity(externalPath, userName, externalPath, guids.externalPathGuid)
 
-    lineageRecorderRef ! ReadOrWriteLineageEvt(lh, userSTS, method, clientIPAddress, externalFsPath, guids)
+    // tmp wa for non serializable ContentType
+    val customLH = CustomLineageHeaders(lh.host, lh.bucket, lh.pseduoDir, lh.bucketObject, lh.method, lh.contentType.toString(), lh.clientType, lh.queryParams, lh.copySource)
+    lineageRecorderRef ! ReadOrWriteLineageEvt(customLH, userSTS, clientIPAddress, externalFsPath, guids)
 
     method match {
       case Read(_) =>

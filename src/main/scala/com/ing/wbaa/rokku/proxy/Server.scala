@@ -1,10 +1,10 @@
 package com.ing.wbaa.rokku.proxy
 
 import akka.actor.{ ActorSystem, Props }
-import com.ing.wbaa.rokku.proxy.config.{ HttpSettings, KafkaSettings, KerberosSettings, RangerSettings, StorageS3Settings, StsSettings }
+import com.ing.wbaa.rokku.proxy.config._
 import com.ing.wbaa.rokku.proxy.handler.{ FilterRecursiveListBucketHandler, RequestHandlerS3 }
-import com.ing.wbaa.rokku.proxy.persistence.LineageRecorder
-import com.ing.wbaa.rokku.proxy.provider.{ AuthenticationProviderSTS, AuthorizationProviderRanger, KerberosLoginProvider, LineageProviderAtlas, MessageProviderKafka, SignatureProviderAws }
+import com.ing.wbaa.rokku.proxy.persistence.{ LineageChecker, LineageRecorder }
+import com.ing.wbaa.rokku.proxy.provider._
 
 object Server extends App {
 
@@ -20,8 +20,9 @@ object Server extends App {
     override val stsSettings: StsSettings = StsSettings(system)
     override val kafkaSettings: KafkaSettings = KafkaSettings(system)
 
-    // start lineage recorder actor
+    // start lineage recorder /reply actors
     val requestRecorderRef = system.actorOf(Props(classOf[LineageRecorder], "lineage-rec-id-1"), "lineage-rec-id-1")
+    val requestReplyRef = system.actorOf(Props(classOf[LineageChecker], "lineage-rec-id-1"), "lineageReply")
 
     // Force Ranger plugin to initialise on startup
     rangerPluginForceInit

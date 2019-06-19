@@ -47,11 +47,14 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka"            %% "akka-testkit"           % akkaVersion       % Test,
     "com.typesafe.akka"            %% "akka-http-testkit"      % akkaHttpVersion   % Test,
     "org.scalatest"                %% "scalatest"              % "3.0.5"           % "it,test",
-    "com.amazonaws"                %  "aws-java-sdk-sts"       % "1.11.505"        % IntegrationTest,
-    "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.98",
-    "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % "0.98" % Test
+    "com.amazonaws"                %  "aws-java-sdk-sts"       % "1.11.505"        % IntegrationTest
+) ++ persisteneDependencies
+
+val persisteneDependencies = Seq(
+  "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
+  "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
+  "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.98",
+  "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % "0.98" % Test
 )
 
 // Fix logging dependencies:

@@ -1,30 +1,41 @@
 package com.ing.wbaa.rokku.proxy.persistence
 
 import akka.actor.Actor
-import akka.http.scaladsl.model.RemoteAddress
+import akka.http.scaladsl.model.{ HttpMethod, RemoteAddress }
 import akka.persistence.PersistentActor
 import com.ing.wbaa.rokku.proxy.data.LineageLiterals.AWS_S3_OBJECT_TYPE
-import com.ing.wbaa.rokku.proxy.data.{ AccessType, LineageHeaders, LineageObjectGuids, User }
+import com.ing.wbaa.rokku.proxy.data.{ AccessType, LineageObjectGuids, User }
 import com.ing.wbaa.rokku.proxy.persistence.LineageRecorder.{ DeleteEntityLineageEvt, LineageForCopyOperationEvt, ReadOrWriteLineageEvt }
 import com.typesafe.scalalogging.LazyLogging
 
 object LineageRecorder {
+  case class CustomLineageHeaders(
+      host: Option[String],
+      bucket: String,
+      pseduoDir: Option[String],
+      bucketObject: Option[String],
+      method: HttpMethod,
+      contentType: String,
+      clientType: Option[String],
+      queryParams: Option[String],
+      copySource: Option[String])
+
   case class ReadOrWriteLineageEvt(
-      lh: LineageHeaders,
+      lh: CustomLineageHeaders,
       userSTS: User,
-      method: AccessType,
+      //method: AccessType,
       clientIPAddress: RemoteAddress,
       externalFsPath: Option[String] = None,
-      guids: LineageObjectGuids = LineageObjectGuids()
+      guids: LineageObjectGuids
   )
 
   case class LineageForCopyOperationEvt(
-      lh: LineageHeaders,
+      lh: CustomLineageHeaders,
       userSTS: User,
       method: AccessType,
       clientIPAddress: RemoteAddress,
-      srcGuids: LineageObjectGuids = LineageObjectGuids(),
-      destGuids: LineageObjectGuids = LineageObjectGuids()
+      srcGuids: LineageObjectGuids,
+      destGuids: LineageObjectGuids
   )
 
   case class DeleteEntityLineageEvt(entityName: String, userSTS: User, entityType: String = AWS_S3_OBJECT_TYPE)

@@ -5,17 +5,20 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ HttpMethods, HttpRequest, MediaTypes, RemoteAddress }
 import akka.stream.ActorMaterializer
 import com.ing.wbaa.rokku.proxy.data.LineageLiterals._
-import com.ing.wbaa.rokku.proxy.handler.FilterRecursiveMultiDelete.exctractMultideleteObjectsFlow
-import com.ing.wbaa.rokku.proxy.provider.atlas.ModelKafka.bucketEntity
 import com.ing.wbaa.rokku.proxy.data.{ Read, RequestId, User, Write }
+import com.ing.wbaa.rokku.proxy.handler.FilterRecursiveMultiDelete.exctractMultideleteObjectsFlow
+import com.ing.wbaa.rokku.proxy.persistence.LineageChecker.QueryStateRWLineage
 import com.ing.wbaa.rokku.proxy.provider.atlas.LineageHelpers
+import com.ing.wbaa.rokku.proxy.provider.atlas.ModelKafka.bucketEntity
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait LineageProviderAtlas extends LineageHelpers {
 
   protected[this] implicit def system: ActorSystem
-  val lineageRecorderRef = system.actorSelection("/user/lineage-rec-id-1")
+  implicit lazy val ec: ExecutionContext = system.dispatcher
+  lazy val lineageRecorderRef = system.actorSelection("/user/lineage-rec-id-1")
+  lazy val lineageReplyRef = system.actorSelection("/user/lineageReply")
 
   def createLineageFromRequest(httpRequest: HttpRequest, userSTS: User, clientIPAddress: RemoteAddress)(implicit id: RequestId): Future[Done] = {
     val lineageHeaders = getLineageHeaders(httpRequest)
@@ -23,6 +26,12 @@ trait LineageProviderAtlas extends LineageHelpers {
     val isMultideletePost =
       (httpRequest.entity.contentType.mediaType == MediaTypes.`application/xml` || httpRequest.entity.contentType.mediaType == MediaTypes.`application/octet-stream`) &&
         lineageHeaders.queryParams.getOrElse("") == "delete"
+
+    import scala.concurrent.duration._
+    import scala.language.postfixOps
+    system.scheduler.schedule(10 seconds, 10 seconds) {
+      lineageReplyRef ! QueryStateRWLineage
+    }
 
     if (lineageHeaders.bucket.length > 1) {
       lineageHeaders.method match {
