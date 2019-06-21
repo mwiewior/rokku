@@ -3,6 +3,7 @@ package com.ing.wbaa.rokku.proxy
 import akka.actor.{ ActorSystem, Props }
 import com.ing.wbaa.rokku.proxy.config._
 import com.ing.wbaa.rokku.proxy.handler.{ FilterRecursiveListBucketHandler, RequestHandlerS3 }
+import com.ing.wbaa.rokku.proxy.persistence.LineageChecker.CheckerWakeUp
 import com.ing.wbaa.rokku.proxy.persistence.{ LineageChecker, LineageRecorder }
 import com.ing.wbaa.rokku.proxy.provider._
 
@@ -24,6 +25,7 @@ object Server extends App {
     val requestRecorderRef = system.actorOf(Props(classOf[LineageRecorder], "lineage-rec-id-1"), "lineage-rec-id-1")
     val requestReplyRef = system.actorOf(Props(classOf[LineageChecker], "lineage-rec-id-1"), "lineageReply")
 
+    lineageReplyRef ! CheckerWakeUp
     // Force Ranger plugin to initialise on startup
     rangerPluginForceInit
   }.startup
